@@ -1,45 +1,50 @@
+import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.pyplot as plt
+from pandas_datareader import data as pdr
+import yfinance as yf
 
-# Carregar dados financeiros
-# Substitua este exemplo por código para carregar seus próprios dados
-# Por exemplo, você pode carregar dados de um arquivo CSV ou de uma API financeira
-def carregar_dados():
-    # Exemplo de dados fictícios
-    dados = {
-        'Data': ['2022-01-01', '2022-01-02', '2022-01-03'],
-        'Preço': [100, 110, 105],
-        'Volume': [10000, 12000, 11000]
-    }
-    df = pd.DataFrame(dados)
-    df['Data'] = pd.to_datetime(df['Data'])
-    return df
+# Configurações padrão do Seaborn para gráficos
+sns.set_style("whitegrid")
 
-# Realizar análise de dados
-def analisar_dados(df):
-    # Exemplo: calcular média e desvio padrão dos preços
-    media_preco = df['Preço'].mean()
-    desvio_padrao_preco = df['Preço'].std()
+# Título do aplicativo
+st.title('Visualização de Dados da Bolsa de Valores')
 
-    print("Média de Preço:", media_preco)
-    print("Desvio Padrão de Preço:", desvio_padrao_preco)
+# Entrada para o ticker da ação
+ticker = st.text_input('Insira o Ticker da Ação (ex: AAPL)')
 
-    # Exemplo: visualização dos preços ao longo do tempo
-    plt.figure(figsize=(10, 6))
-    sns.lineplot(x='Data', y='Preço', data=df)
-    plt.title('Preço ao Longo do Tempo')
+# DataFrame vazio para armazenar os dados
+df = pd.DataFrame()
+
+# Carregar dados da bolsa de valores
+try:
+    yf.pdr_override()  # Sobrescreve o método de busca do Yahoo Finance
+    df = pdr.get_data_yahoo(ticker, start='2022-01-01', end='2022-12-31')
+except Exception as e:
+    st.error(f'Erro ao carregar dados: {e}')
+
+# Verifica se o DataFrame não está vazio antes de continuar
+if not df.empty:
+    # Mostra os primeiros registros dos dados
+    st.write(df.head())
+
+    # Análise descritiva dos dados
+    st.subheader('Análise Descritiva dos Dados')
+    st.write(df.describe())
+
+    # Gráfico de linha dos preços de fechamento com Seaborn
+    st.subheader('Gráfico de Linha - Preços de Fechamento')
+    fig, ax = plt.subplots()
+    sns.lineplot(x=df.index, y=df['Close'], ax=ax)
     plt.xlabel('Data')
-    plt.ylabel('Preço')
-    plt.show()
+    plt.ylabel('Preço de Fechamento')
+    st.pyplot(fig)
 
-# Função principal
-def main():
-    # Carregar dados
-    dados = carregar_dados()
-
-    # Realizar análise de dados
-    analisar_dados(dados)
-
-if __name__ == "__main__":
-    main()
+    # Gráfico de barras do volume de negociação com Matplotlib
+    st.subheader('Gráfico de Barras - Volume de Negociação')
+    fig, ax = plt.subplots()
+    ax.bar(df.index, df['Volume'], color='skyblue')
+    plt.xlabel('Data')
+    plt.ylabel('Volume de Negociação')
+    st.pyplot(fig)
