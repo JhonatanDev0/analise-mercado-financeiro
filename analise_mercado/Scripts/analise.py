@@ -14,13 +14,19 @@ st.title('Visualização de Dados da Bolsa de Valores')
 # Entrada para o ticker da ação
 ticker = st.text_input('Insira o Ticker da Ação (ex: AAPL)')
 
+# Entrada para a data inicial
+start_date = st.date_input('Selecione a Data Inicial', pd.to_datetime('2022-01-01'))
+
+# Entrada para a data final
+end_date = st.date_input('Selecione a Data Final', pd.to_datetime('2022-12-31'))
+
 # DataFrame vazio para armazenar os dados
 df = pd.DataFrame()
 
 # Carregar dados da bolsa de valores
 try:
     yf.pdr_override()  # Sobrescreve o método de busca do Yahoo Finance
-    df = pdr.get_data_yahoo(ticker, start='2022-01-01', end='2022-12-31')
+    df = pdr.get_data_yahoo(ticker, start=start_date, end=end_date)
 except Exception as e:
     st.error(f'Erro ao carregar dados: {e}')
 
